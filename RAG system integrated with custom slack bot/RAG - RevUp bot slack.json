@@ -1,0 +1,1381 @@
+{
+  "name": "RAG - RevUp bot slack",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload your data to test RAG",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload your file(s)",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf, .csv",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "f7a656ec-83fc-4ed2-a089-57a9def662b7",
+      "name": "Upload your file here",
+      "webhookId": "82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d"
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 1536
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        640
+      ],
+      "id": "6ea78663-cf2f-4f2d-8e68-43047c2afd87",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Readme\nLoad your data into a vector database with the 📚 **Load Data** flow, and then use your data as chat context with the 🐕 **Retriever** flow.\n\n**Quick start**\n1. Click on the `Execute Workflow` button to run the 📚 **Load Data** flow.\n2. Click on `Open Chat` button to run the 🐕 **Retriever** flow. Then ask a question about content from your document(s)\n\n\nFor more info, check [our docs on RAG in n8n](https://docs.n8n.io/advanced-ai/rag-in-n8n/).",
+        "height": 300,
+        "width": 440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -656,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "0d07742b-0b36-4c2e-990c-266cbe6e2d4d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 📚 Load Data Flow",
+        "height": 460,
+        "width": 700,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "d19d04f3-5231-4e47-bed7-9f24a4a8f582",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a company policy assistant.\n\nYou must answer questions ONLY using the provided retrieved document context.\n\nRules:\n- Do NOT use outside knowledge.\n- Do NOT guess or assume.\n- If the answer is not present in the retrieved documents, reply:\n  \"Information not available in the provided documents.\"\n\n- Keep answers clear and concise.\n- If possible, quote exact policy wording.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -16
+      ],
+      "id": "579aed76-9644-42d1-ac13-7369059ff1c2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1136,
+        208
+      ],
+      "id": "b5aa8942-9cd5-4c2f-bd77-7a0ceb921bac",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🐕 2. Retriever Flow",
+        "height": 796,
+        "width": 1784,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        608,
+        976
+      ],
+      "typeVersion": 1,
+      "id": "28bc73a1-e64a-47bf-ac1c-ffe644894ea5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Embeddings\n\nThe Insert and Retrieve operation use the same embedding node.\n\nThis is to ensure that they are using the **exact same embeddings and settings**.\n\nDifferent embeddings might not work at all, or have unintended consequences.\n",
+        "height": 240,
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        416,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "0cf8c647-418c-4d1a-8952-766145afca72",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test-run",
+          "mode": "list",
+          "cachedResultName": "test-run"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        0
+      ],
+      "id": "e23bca7e-daeb-4828-9061-644403e0614e",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "4ysXzRFZ8XK5OmFj",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file-name",
+                "value": "={{ $('Upload your file here').item.json[\"Upload your file(s)\"][0].filename }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        192
+      ],
+      "id": "b11bcdfc-8411-4344-a9ba-2048a70cf9b8",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "description": "prompting information"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        192
+      ],
+      "id": "c4922af0-0cee-4b57-98af-fb914bd5d4e6",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test-run",
+          "mode": "list",
+          "cachedResultName": "test-run"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        368
+      ],
+      "id": "71ebe954-d4b7-46b0-bacb-4ad2e4b2a263",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "4ysXzRFZ8XK5OmFj",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        368
+      ],
+      "id": "b596635b-8ece-4202-ae15-0bcfb7b7ba5c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.event.channel }}",
+          "mode": "id"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('Webhook').item.json.body.event.ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1920,
+        -16
+      ],
+      "id": "8efdd6d1-2cef-4046-a3f7-f65771f611bb",
+      "name": "Send a message",
+      "webhookId": "7221a75b-ccd0-4ec0-8c14-c0e9733ce517",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3316bd73-9412-469f-b887-181bf702b75d",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        -192
+      ],
+      "id": "eeb373d4-dea8-4bc8-a4c7-05e0817654dd",
+      "name": "Webhook",
+      "webhookId": "3316bd73-9412-469f-b887-181bf702b75d"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=HTTP 200 OK\nContent-type: text/plain\n{{ $json.body.challenge }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        -192
+      ],
+      "id": "6c24b90a-3176-47fa-be82-2a40182f7354",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').item.json.sessionId }}",
+        "contextWindowLength": 0
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        192
+      ],
+      "id": "50aa876b-3bf1-4f43-9f50-339d5d9ae522",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8f2cd5e5-534c-46dd-990c-30052954b2fd",
+              "name": "sessionId",
+              "value": "={{$json.body.event.thread_ts || $json.body.event.channel}}\n",
+              "type": "string"
+            },
+            {
+              "id": "598e3f69-8bc9-4c4e-a406-0d85fe9520f7",
+              "name": "chatInput",
+              "value": "={{$json.body.event.text}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        -16
+      ],
+      "id": "f1f637ae-e8ee-4db4-8ded-b0c75a950043",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "message"
+        ],
+        "channelId": {
+          "__rl": true,
+          "value": "D0A7M518BBP",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        192
+      ],
+      "id": "7fc0e591-4880-4a0c-afd0-efce95e30668",
+      "name": "Slack Trigger",
+      "webhookId": "498fb106-a398-4dc7-b30d-e21e5846da39",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1ab18708-796a-4a15-a678-a6a57e3ca40b",
+              "leftValue": "={{ $json.body.challenge }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        -192
+      ],
+      "id": "137ecd6e-1f23-4aca-9aa6-985328a03d70",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "D0A6U7S5Z8B",
+          "mode": "id"
+        },
+        "text": "=hello",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2208,
+        -16
+      ],
+      "id": "aa43db66-59da-40b5-a8b3-11b73fbbd5a8",
+      "name": "Send a message1",
+      "webhookId": "7221a75b-ccd0-4ec0-8c14-c0e9733ce517",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9bca9afa-54ea-4dcc-a595-0ddc90687df7",
+              "leftValue": "={{ $json.body.event.bot_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e9030a74-45e9-43a0-a472-792a28e85bd4",
+              "leftValue": "={{ $json.body.event.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        0
+      ],
+      "id": "e22bd0bf-d311-46c6-9bf2-41f98311cb0a",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "separator": "[\"\\n\\n\", \"\\n\", \" \", \"\"]",
+        "chunkOverlap": 150
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        0,
+        464
+      ],
+      "id": "4b9bfbe5-97ac-4889-a0ed-9588b8102888",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        304,
+        464
+      ],
+      "id": "ee884e21-cd1a-473c-b47f-4ac6844f3ea5",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a company policy assistant.\n\nYou must answer questions ONLY using the provided retrieved document context.\n\nRules:\n- Do NOT use outside knowledge.\n- Do NOT guess or assume.\n- If the answer is not present in the retrieved documents, reply:\n  \"Information not available in the provided documents.\"\n\n- Keep answers clear and concise.\n- If possible, quote exact policy wording.\n\n- database is providing you the material . database is your 'tool'\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1792,
+        1264
+      ],
+      "id": "92260fbf-691c-4539-a9da-0de79d86c0d7",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Webhook1').item.json.body.event.channel }}",
+          "mode": "id"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('Webhook1').item.json.body.event.ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2144,
+        1312
+      ],
+      "id": "22a37801-a596-44b5-af17-ca30e355867a",
+      "name": "Send a message2",
+      "webhookId": "7221a75b-ccd0-4ec0-8c14-c0e9733ce517",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3316bd73-9412-469f-b887-181bf702b75d",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        1120
+      ],
+      "id": "379347a8-b3a4-4a51-85bb-1dee88938b4e",
+      "name": "Webhook1",
+      "webhookId": "3316bd73-9412-469f-b887-181bf702b75d"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=HTTP 200 OK\nContent-type: text/plain\n{{ $json.body.challenge }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        1104
+      ],
+      "id": "e18d5cf9-16ad-4564-972b-cb07849f405d",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8f2cd5e5-534c-46dd-990c-30052954b2fd",
+              "name": "sessionId",
+              "value": "={{$json.body.event.thread_ts || $json.body.event.channel}}\n",
+              "type": "string"
+            },
+            {
+              "id": "598e3f69-8bc9-4c4e-a406-0d85fe9520f7",
+              "name": "chatInput",
+              "value": "={{$json.body.event.text}}",
+              "type": "string"
+            },
+            {
+              "id": "266a4e64-ce54-4618-9bb9-6d06d4de65af",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        1248
+      ],
+      "id": "64781100-13be-4fae-84b2-5b55cefb5fb1",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1ab18708-796a-4a15-a678-a6a57e3ca40b",
+              "leftValue": "={{ $json.body.challenge }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        784,
+        1120
+      ],
+      "id": "f9609208-bd5f-475d-9b6f-b20b937b02ef",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9bca9afa-54ea-4dcc-a595-0ddc90687df7",
+              "leftValue": "={{ $json.body.event.bot_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e9030a74-45e9-43a0-a472-792a28e85bd4",
+              "leftValue": "={{ $json.body.event.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "22094271-11be-46df-9d95-dbee19e741d9",
+              "leftValue": "={{ $json.headers[\"x-slack-retry-num\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        1296
+      ],
+      "id": "6d8c98aa-8429-43cf-a379-1a2022c90365",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').item.json.sessionId }}",
+        "contextWindowLength": 0
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1712,
+        512
+      ],
+      "id": "91856b05-9cb4-41d8-9e84-3785e50a4995",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields1').item.json.sessionId }}",
+        "contextWindowLength": 0
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        1584
+      ],
+      "id": "a4d432bc-c4d0-4c95-b825-fdcabd33a453",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        1568
+      ],
+      "id": "0b03466c-e886-4e07-986b-58096d0bc9ef",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=get data similar to the user input :  {{ $('Webhook1').item.json.body.event.blocks[0].elements[0].elements[0].text }}",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test-run",
+          "mode": "list",
+          "cachedResultName": "test-run"
+        },
+        "topK": 6,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1920,
+        1552
+      ],
+      "id": "51b72224-91e4-4197-ade6-29fd2dab3c8b",
+      "name": "Pinecone Vector Store2",
+      "credentials": {
+        "pineconeApi": {
+          "id": "4ysXzRFZ8XK5OmFj",
+          "name": "PineconeApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "mt-ba.app.n8n.cloud",
+            "user-agent": "Slackbot 1.0 (+https://api.slack.com/robots)",
+            "content-length": "1913",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "54.227.59.227",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9c05cd5df0cd9e01-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "54.227.59.227, 172.70.34.22",
+            "x-forwarded-host": "mt-ba.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-39-c65d8f959-hb5rg",
+            "x-is-trusted": "yes",
+            "x-real-ip": "54.227.59.227",
+            "x-slack-request-timestamp": "1768820151",
+            "x-slack-signature": "v0=6073ce68632f3489511383d3fd2177b729458246d51bb4fae0c2c75eb36aac4c"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "token": "71011QifgxkSX5Im8wPJUGUH",
+            "team_id": "T03BMLYEW",
+            "context_team_id": "T03BMLYEW",
+            "context_enterprise_id": null,
+            "api_app_id": "A0A6XG7T1GU",
+            "event": {
+              "type": "message",
+              "user": "U0A6CKZ3JNT",
+              "ts": "1768820150.640029",
+              "bot_id": "B0A6QL9ECP7",
+              "app_id": "A0A6XG7T1GU",
+              "text": "The per diem rates applicable for travel to the US are:\n\n- **USA Tier 1 Cities** (e.g., New York, San Francisco, Boston): **$270**\n- **USA Tier 2 Cities**: **$180**\n\nThese rates cover both accommodation and meals. If you have any further questions, feel free to ask!",
+              "team": "T03BMLYEW",
+              "bot_profile": {
+                "id": "B0A6QL9ECP7",
+                "deleted": false,
+                "name": "Revup Bot",
+                "updated": 1767617170,
+                "app_id": "A0A6XG7T1GU",
+                "user_id": "U0A6CKZ3JNT",
+                "icons": {
+                  "image_36": "https://a.slack-edge.com/80588/img/plugins/app/bot_36.png",
+                  "image_48": "https://a.slack-edge.com/80588/img/plugins/app/bot_48.png",
+                  "image_72": "https://a.slack-edge.com/80588/img/plugins/app/service_72.png"
+                },
+                "team_id": "T03BMLYEW"
+              },
+              "thread_ts": "1768281399.680509",
+              "parent_user_id": "U0A6CKZ3JNT",
+              "blocks": [
+                {
+                  "type": "rich_text",
+                  "block_id": "DyRI",
+                  "elements": [
+                    {
+                      "type": "rich_text_section",
+                      "elements": [
+                        {
+                          "type": "text",
+                          "text": "The per diem rates applicable for travel to the US are:\n\n- **USA Tier 1 Cities** (e.g., New York, San Francisco, Boston): **$270**\n- **USA Tier 2 Cities**: **$180**\n\nThese rates cover both accommodation and meals. If you have any further questions, feel free to ask!"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "language": {
+                "locale": "en",
+                "is_reliable": true
+              },
+              "channel": "D0A8JSSTJMN",
+              "event_ts": "1768820150.640029",
+              "channel_type": "im"
+            },
+            "type": "event_callback",
+            "event_id": "Ev0A9HBR9FFY",
+            "event_time": 1768820150,
+            "authorizations": [
+              {
+                "enterprise_id": null,
+                "team_id": "T03BMLYEW",
+                "user_id": "U0A6CKZ3JNT",
+                "is_bot": true,
+                "is_enterprise_install": false
+              }
+            ],
+            "is_ext_shared_channel": false,
+            "event_context": "4-eyJldCI6Im1lc3NhZ2UiLCJ0aWQiOiJUMDNCTUxZRVciLCJhaWQiOiJBMEE2WEc3VDFHVSIsImNpZCI6IkQwQThKU1NUSk1OIn0"
+          },
+          "webhookUrl": "https://mt-ba.app.n8n.cloud/webhook/3316bd73-9412-469f-b887-181bf702b75d",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Upload your file here": [
+      {
+        "json": {
+          "Upload your file(s)": [
+            {
+              "filename": "GlobalTravelPolicy2.0 (1).pdf",
+              "mimetype": "application/pdf",
+              "size": 211805
+            }
+          ],
+          "submittedAt": "2026-01-20T12:09:11.839+05:30",
+          "formMode": "test"
+        },
+        "binary": {
+          "Upload_your_file_s_": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "GlobalTravelPolicy2.0 (1).pdf",
+            "id": "filesystem-v2:workflows/ZPD69LxNFsOl4kTy/executions/temp/binary_data/b43f5b38-e394-4923-9f63-2a66e9dea2a5",
+            "fileSize": "212 kB"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "host": "mt-ba.app.n8n.cloud",
+            "user-agent": "Slackbot 1.0 (+https://api.slack.com/robots)",
+            "content-length": "1060",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "107.20.84.45",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9c0df14335d5c9a0-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "107.20.84.45, 172.68.245.89",
+            "x-forwarded-host": "mt-ba.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-39-c65d8f959-hb5rg",
+            "x-is-trusted": "yes",
+            "x-real-ip": "107.20.84.45",
+            "x-slack-request-timestamp": "1768905508",
+            "x-slack-signature": "v0=a5faeec6c8c83ea58015b2f6153fb679e232d6e883670962c1cc4026bbca314b"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "token": "71011QifgxkSX5Im8wPJUGUH",
+            "team_id": "T03BMLYEW",
+            "context_team_id": "T03BMLYEW",
+            "context_enterprise_id": null,
+            "api_app_id": "A0A6XG7T1GU",
+            "event": {
+              "type": "message",
+              "user": "U09GTTZ2KJS",
+              "ts": "1768905507.617759",
+              "client_msg_id": "65c86fb3-c5c0-4ca0-8d94-66567f3f5628",
+              "text": "hotel stay in pune",
+              "team": "T03BMLYEW",
+              "thread_ts": "1768819440.625519",
+              "parent_user_id": "U0A6CKZ3JNT",
+              "blocks": [
+                {
+                  "type": "rich_text",
+                  "block_id": "lL7Dk",
+                  "elements": [
+                    {
+                      "type": "rich_text_section",
+                      "elements": [
+                        {
+                          "type": "text",
+                          "text": "hotel stay in pune"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "channel": "D0A7M518BBP",
+              "assistant_thread": {
+                "action_token": "10332370267474.3395712506.dc6f8662f9fd758c38d68504e91309cb"
+              },
+              "event_ts": "1768905507.617759",
+              "channel_type": "im"
+            },
+            "type": "event_callback",
+            "event_id": "Ev0A9ATD7YP9",
+            "event_time": 1768905507,
+            "authorizations": [
+              {
+                "enterprise_id": null,
+                "team_id": "T03BMLYEW",
+                "user_id": "U0A6CKZ3JNT",
+                "is_bot": true,
+                "is_enterprise_install": false
+              }
+            ],
+            "is_ext_shared_channel": false,
+            "event_context": "4-eyJldCI6Im1lc3NhZ2UiLCJ0aWQiOiJUMDNCTUxZRVciLCJhaWQiOiJBMEE2WEc3VDFHVSIsImNpZCI6IkQwQTdNNTE4QkJQIn0"
+          },
+          "webhookUrl": "https://mt-ba.app.n8n.cloud/webhook/3316bd73-9412-469f-b887-181bf702b75d",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Upload your file here": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Pinecone Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        []
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store2": {
+      "main": [
+        []
+      ],
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d518b4ec-a833-451a-ac39-69cca331e4fc",
+  "meta": {
+    "templateId": "rag-starter-template",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f39d8fdd402ddce20d0eb724526828e8c2d8679170e3a08fe6cd471c799fab6"
+  },
+  "id": "ZPD69LxNFsOl4kTy",
+  "tags": []
+}

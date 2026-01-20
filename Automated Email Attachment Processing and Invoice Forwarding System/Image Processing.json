@@ -1,0 +1,392 @@
+{
+  "name": "Image Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"message\": \"null\",\n  \"id\": \"null\",\n  \"name\":\"null\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -336,
+        -16
+      ],
+      "id": "e8741884-44e2-4386-983d-a13c6c985b24",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        -240
+      ],
+      "id": "60c7443c-8186-4faa-8e26-d76ee46d2096",
+      "name": "Telegram",
+      "webhookId": "0b60a1de-a75c-4b2f-ae0f-aa63111441a7",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        480,
+        336
+      ],
+      "id": "3e6407dc-a36d-490a-a84a-896eb28f8a0c",
+      "name": "Analyze an image1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l44pTMbow521VBZM",
+          "name": "Google Gemini(PaLM) Api account - Aarush"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Here is the data, you need to tell if it belongs to an invoice or not :{{ $json.content.parts[0].text }}"
+            },
+            {
+              "content": "You are an intelligent bot which is very efficient in determining if the data/text of a receipt , a document or an image is data of an invoice or not. output should contain a boolean value (field : IsInvoice), telling us if the data belongs to an invoice or not.",
+              "role": "model"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        368
+      ],
+      "id": "4a4cb283-7568-4ceb-b02d-b4072a8c1d45",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l44pTMbow521VBZM",
+          "name": "Google Gemini(PaLM) Api account - Aarush"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "57a7b497-6351-4c17-b18a-ef2e8712f10c",
+              "leftValue": "={{$binary[\"attachment_0\"][\"fileName\"]}}",
+              "rightValue": "={{ $('When Executed by Another Workflow').item.json.name }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -16
+      ],
+      "id": "9edf7b2a-dcc9-46e9-b4f6-d0d0d6f550d5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "$binary,threadId",
+        "include": "allOtherFields",
+        "options": {
+          "includeBinary": true
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -16
+      ],
+      "id": "975cfea9-18eb-40d6-a347-9176bfe7913f",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over all input items and create new items\nconst newItems = $input.all().map((item, idx) => {\n  const newItem = { json: {}, binary: {} };\n  // Take the first binary file and rename it as 'attachment_0'\n  if (item.binary) {\n    const firstKey = Object.keys(item.binary)[0];\n    newItem.binary['attachment_0'] = item.binary[firstKey];\n  }\n  return newItem;\n});\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "13c0b298-49db-4a07-9a83-7873425cd3ba",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        -16
+      ],
+      "id": "56713ad2-cb06-418d-ac5c-3cfe515f35ea",
+      "name": "Get a message",
+      "webhookId": "e99cf6bf-3c98-4dcf-97b6-27e376381661",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a7774933-8553-4f53-b742-b416dbfd0f08",
+              "name": "IsInvoice",
+              "value": "={{ $json.candidates[0].content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "c3ef7c3d-176b-4c64-aeb8-db9eef1238d1",
+              "name": "fileName",
+              "value": "={{ $('When Executed by Another Workflow').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        -16
+      ],
+      "id": "368f240a-a73b-4fcc-bba8-47b40cb704fc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "inputType": "base64",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        784,
+        -32
+      ],
+      "id": "b7c312bc-b286-4a1d-8ac2-21cdf1a06c9a",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.1-chat-latest",
+          "mode": "list",
+          "cachedResultName": "GPT-5.1-CHAT-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Here is the data, you need to tell if it belongs to an invoice or not :{{ $json.content.parts[0].text }}"
+            },
+            {
+              "role": "assistant",
+              "content": "You are an intelligent bot which is very efficient in determining if the data/text of a receipt , a document or an image is data of an invoice or not. output should contain a boolean value (field : IsInvoice), telling us if the data belongs to an invoice or not."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        -32
+      ],
+      "id": "72dbb9a3-fe7e-4b6a-997d-bff1e961a01e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        []
+      ]
+    },
+    "Analyze an image1": {
+      "main": [
+        []
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        []
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c61cb87f-a9bd-48ad-97e8-011eb1db7623",
+  "meta": {
+    "instanceId": "0f39d8fdd402ddce20d0eb724526828e8c2d8679170e3a08fe6cd471c799fab6"
+  },
+  "id": "Dl6TUrHDIqemHWjq",
+  "tags": []
+}

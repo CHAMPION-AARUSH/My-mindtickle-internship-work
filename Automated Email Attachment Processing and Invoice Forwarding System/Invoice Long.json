@@ -1,0 +1,1814 @@
+{
+  "name": "Invoice Long",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -8016,
+        6112
+      ],
+      "id": "8c10169e-67e9-496b-a590-4dcb1e8b6ffa",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const binaryKeys = Object.keys(item.binary || {});\nconst binaryKey = binaryKeys[0];\nconst fileName = item.binary[binaryKey].fileName || 'Uploaded_File.bin';\n\nitem.json = {};\nitem.json.binaryFieldName = binaryKey;\nitem.json.fileName = fileName;\n\nreturn item;"
+      },
+      "id": "0cc9fc32-1050-4c7c-998c-534f664f5253",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -6608,
+        5856
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const [key, value] of Object.entries(items[0].binary || {})) {\n  // Get original extension if available, fallback to mime type-derived\n  const originalName = value.fileName || 'unknown';\n  const extension = originalName.includes('.')\n    ? originalName.split('.').pop()\n    : (value.mimeType?.split('/')[1] || 'bin');\n  const fileName = originalName.includes('.')\n    ? originalName\n    : `unknown.${extension}`;\n\n  output.push({\n    binary: {\n      data: value\n    },\n    json: {\n      originalKey: key,\n      fileName: fileName,\n      mimeType: value.mimeType || 'unknown'\n    }\n  });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -7744,
+        6096
+      ],
+      "id": "99b8d7a1-9948-465d-830c-c8814a9dd3c9",
+      "name": "Code1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "547fbbe8-9492-417d-b000-8131df840948"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6429770b-5a8a-4573-a6e8-87e650b481db",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "image/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -7296,
+        6096
+      ],
+      "id": "2ecfe98f-5c73-421c-bf17-89665f7e9805",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -7056,
+        5680
+      ],
+      "id": "a1fb4a89-24ed-4eda-ba7b-9f975fd96b1d",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please process the document passed to you as \"data\" and return true or false mapped to a field named \"IsInvoice\" .",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an AI agent that MUST use tools.  \nYou CANNOT produce a normal chat response.  \nYou must call tools until both of the following tools have been executed:\n\n1. DocumentProcessing\n2. ImageProcessing\n\nThe input file is always available as binary data\n\nYour workflow:\n\nStep 1:\n- Always start by calling DocumentProcessing with:\n  { \"binaryKey\": \"data\" }\n\nStep 2:\n- Wait for DocumentProcessing result.\n- Store the field \"IsInvoice\" as DocResult.\n\nStep 3:\n- Then call ImageProcessing with:\n  { \"binaryKey\": \"data\" }\n\nStep 4:\n- Wait for ImageProcessing result.\n- Store the field \"IsInvoice\" as ImgResult.\n\nStep 5:\n- Compute FinalResult = (DocResult == true) OR (ImgResult == true)\n\nStep 6:\n- Return ONLY this JSON (as final answer, not a tool call):\n  { \"IsInvoice\": FinalResult }\n\nRules:\n- Do NOT answer normally.\n- Only tool calls or the final JSON are allowed.\n- Never skip a tool. Both tools must run every time.\n",
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -6224,
+        5872
+      ],
+      "id": "ab791f35-31ea-46a0-ac8f-2b5539db410b",
+      "name": "AI Agent2",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Gmail Trigger').item.json.threadId }}",
+        "contextWindowLength": 6
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -6272,
+        6096
+      ],
+      "id": "00876b5d-e942-4d89-ae16-0588255282d9",
+      "name": "Window Buffer Memory2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -6720,
+        6240
+      ],
+      "id": "50ad7de1-416f-451e-a740-13c80052270c",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l44pTMbow521VBZM",
+          "name": "Google Gemini(PaLM) Api account - Aarush"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool if user is looking to extract data from a pdf.",
+        "workflowId": {
+          "__rl": true,
+          "value": "sGO5yzSXmg1mXEUE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/sGO5yzSXmg1mXEUE",
+          "cachedResultName": "Document Processing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "process this document for me",
+            "id": "={{ $('Gmail Trigger').item.json.id }}",
+            "name": "={{ $('Code').item.json.fileName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -6144,
+        6096
+      ],
+      "id": "576aafc1-a617-4e23-b786-e7576ca2942d",
+      "name": "Document Processing2"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"IsInvoice\":false,\n    \"fileName\":\"acd.png/pdf\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -5888,
+        6096
+      ],
+      "id": "51721d3b-b308-4dcf-bcc4-8d4e87a99203",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "name": "Image_processing",
+        "description": "Call this tool if user is looking to extract data from a image.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Dl6TUrHDIqemHWjq",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Dl6TUrHDIqemHWjq",
+          "cachedResultName": "Image Processing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "=Process this document for me",
+            "id": "={{ $('Gmail Trigger').item.json.id }}",
+            "name": "={{ $('Code').item.json.fileName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -6016,
+        6096
+      ],
+      "id": "361d1f3f-5c24-42f9-a2af-a93a220f7ff4",
+      "name": "Image Processing2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2c29210f-947d-41b8-986e-2a42e998787b",
+              "leftValue": "={{ $json.output.IsInovice }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5680,
+        5968
+      ],
+      "id": "f9167e55-22d2-4882-9f1b-8e4e307b7906",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "sendTo": "aaaabisht14@gmail.com",
+        "subject": "Just testing work flow....ignore",
+        "emailType": "text",
+        "message": "Invoice",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -5040,
+        5840
+      ],
+      "id": "9cfaf4cd-23d1-4198-9f3b-cbbf7637cc7c",
+      "name": "Send a message1",
+      "webhookId": "d7876f2d-49e8-4bee-8e0b-7a0efd0f3a2c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6f87b938-89ea-407a-9368-ea5c1b06eb7a",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4864,
+        5840
+      ],
+      "id": "b72f1f2a-2a05-4702-9307-f238c97b32c9",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_8106579140207699777"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4640,
+        5968
+      ],
+      "id": "dd66cd69-7cfb-4aca-a72a-455f4502a64a",
+      "name": "Add label to message1",
+      "webhookId": "8e386a68-5745-4423-bd9d-90f7b52a7ae6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -5488,
+        5840
+      ],
+      "id": "888c38c3-97fb-4b8a-83c4-c873912407ee",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a9052f1d-7c7d-477d-8740-cbc51308f6bc",
+              "leftValue": "={{ Object.keys($binary).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -7520,
+        6096
+      ],
+      "id": "66ec24d2-7230-4944-9055-99c59574f129",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -8176,
+        6704
+      ],
+      "id": "d799ca42-2d8a-4ac6-b0e9-42c8fe72b225",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "43ff4367-b6a9-406f-9ed9-47cbef9fd4e2",
+              "leftValue": "={{ Object.keys($binary).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -7472,
+        6720
+      ],
+      "id": "2a5d7f0a-6f07-45f3-b8fe-e124b55f062d",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "simple": false,
+        "filters": {
+          "receivedAfter": "={{ $now.minus({ days: 1 }).toISO() }}\n"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -7968,
+        6704
+      ],
+      "id": "26df13dc-dcd5-4770-b557-62e0612daac1",
+      "name": "Get many messages1",
+      "webhookId": "96ea6d5e-053e-44f2-bac9-6fb28718f976",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -7696,
+        6704
+      ],
+      "id": "3d054942-d747-4814-a55f-4fa5dd008bd0",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c67068b2-a874-4994-98b0-37b309138dfb",
+              "leftValue": "={{ $('Get many messages1').item.json.labelIds }}",
+              "rightValue": "Invoice_forwarded",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -6656,
+        6704
+      ],
+      "id": "86ccd4c1-bd00-4f7e-922c-420ecc54efad",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const [key, value] of Object.entries(items[0].binary || {})) {\n  // Get original extension if available, fallback to mime type-derived\n  const originalName = value.fileName || 'unknown';\n  const extension = originalName.includes('.')\n    ? originalName.split('.').pop()\n    : (value.mimeType?.split('/')[1] || 'bin');\n  const fileName = originalName.includes('.')\n    ? originalName\n    : `unknown.${extension}`;\n\n  output.push({\n    binary: {\n      data: value\n    },\n    json: {\n      originalKey: key,\n      fileName: fileName,\n      mimeType: value.mimeType || 'unknown'\n    }\n  });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -7248,
+        6704
+      ],
+      "id": "d92b41e2-0774-4309-9463-d3c4b071ae7b",
+      "name": "Code2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -6960,
+        6400
+      ],
+      "id": "fbac46af-7d98-44aa-8e2b-1649e5781877",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "5f4dacb9-80f2-466a-8831-4cbad690699b",
+      "name": "Wait 5 Seconds1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -6432,
+        6704
+      ],
+      "webhookId": "16c25b92-e164-42fa-8b99-4709268436ca"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const binaryKeys = Object.keys(item.binary || {});\nconst binaryKey = binaryKeys[0];\nconst fileName = item.binary[binaryKey].fileName || 'Uploaded_File.bin';\n\nitem.json = {};\nitem.json.binaryFieldName = binaryKey;\nitem.json.fileName = fileName;\n\nreturn item;"
+      },
+      "id": "59206493-541f-459a-9bf6-7fd9e01fdf63",
+      "name": "Code3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -6208,
+        6704
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please process the document passed to you as \"data\" and return true or false mapped to a field named \"IsInvoice\" .",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an AI agent that MUST use tools.  \nYou CANNOT produce a normal chat response.  \nYou must call tools until both of the following tools have been executed:\n\n1. DocumentProcessing\n2. ImageProcessing\n\nThe input file is always available as binary data\n\nYour workflow:\n\nStep 1:\n- Always start by calling DocumentProcessing with:\n  { \"binaryKey\": \"data\" }\n\nStep 2:\n- Wait for DocumentProcessing result.\n- Store the field \"IsInvoice\" as DocResult.\n\nStep 3:\n- Then call ImageProcessing with:\n  { \"binaryKey\": \"data\" }\n\nStep 4:\n- Wait for ImageProcessing result.\n- Store the field \"IsInvoice\" as ImgResult.\n\nStep 5:\n- Compute FinalResult = (DocResult == true) OR (ImgResult == true)\n\nStep 6:\n- Return ONLY this JSON (as final answer, not a tool call):\n  { \"IsInvoice\": FinalResult }\n\nRules:\n- Do NOT answer normally.\n- Only tool calls or the final JSON are allowed.\n- Never skip a tool. Both tools must run every time.\n",
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -5808,
+        6704
+      ],
+      "id": "7f13fe12-1249-448f-92f3-461f475273c7",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Loop Over Items2').item.json.threadId }}",
+        "contextWindowLength": 6
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -5856,
+        6928
+      ],
+      "id": "beaf9971-cd4b-422c-a3fb-39bd41053578",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -6560,
+        7120
+      ],
+      "id": "cda36ed5-43ee-4f23-81af-8fb5772d3e57",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l44pTMbow521VBZM",
+          "name": "Google Gemini(PaLM) Api account - Aarush"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool if user is looking to extract data from a pdf.",
+        "workflowId": {
+          "__rl": true,
+          "value": "sGO5yzSXmg1mXEUE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/sGO5yzSXmg1mXEUE",
+          "cachedResultName": "Document Processing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "process this document for me",
+            "id": "={{ $('Loop Over Items2').item.json.id }}",
+            "name": "={{ $('Code3').item.json.fileName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -5728,
+        6928
+      ],
+      "id": "ca7b8685-b455-49bc-99d6-0c7ea057bf95",
+      "name": "Document Processing"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"IsInovice\":\"false\",\n    \"fileName\":\"acd.png/pdf\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -5472,
+        6928
+      ],
+      "id": "c8bd8eca-9901-4ffd-9450-25c99a6954ad",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "name": "Image_processing",
+        "description": "Call this tool if user is looking to extract data from a image.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Dl6TUrHDIqemHWjq",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Dl6TUrHDIqemHWjq",
+          "cachedResultName": "Image Processing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "=Process this document for me",
+            "id": "={{ $('Loop Over Items2').item.json.id }}",
+            "name": "={{ $('Code3').item.json.fileName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -5600,
+        6928
+      ],
+      "id": "bae2daaf-53d5-4d42-b923-2a7b49e5cba2",
+      "name": "Image Processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2c29210f-947d-41b8-986e-2a42e998787b",
+              "leftValue": "={{ $json.output.IsInovice }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5264,
+        6704
+      ],
+      "id": "3c3de81e-a7fa-4543-ac15-1abefb5762a1",
+      "name": "If7"
+    },
+    {
+      "parameters": {
+        "sendTo": "aaaabisht14@gmail.com",
+        "subject": "Just testing work flow....ignore",
+        "emailType": "text",
+        "message": "Invoice",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4688,
+        6592
+      ],
+      "id": "43fc70a1-06af-4eff-aa53-246a995b48e7",
+      "name": "Send a message",
+      "webhookId": "d7876f2d-49e8-4bee-8e0b-7a0efd0f3a2c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6f87b938-89ea-407a-9368-ea5c1b06eb7a",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4464,
+        6592
+      ],
+      "id": "91f5b437-ed94-4682-b356-4e71ce24e267",
+      "name": "If8"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_8106579140207699777"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4128,
+        6688
+      ],
+      "id": "7053ce24-87b1-45a7-8ff8-bd9f28313e5b",
+      "name": "Add label to message",
+      "webhookId": "8e386a68-5745-4423-bd9d-90f7b52a7ae6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -5040,
+        6576
+      ],
+      "id": "17cd07e5-51c3-4275-bfb4-88f3fa0f570b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "gpt-5.2"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -6528,
+        6240
+      ],
+      "id": "adac1808-0e90-4eb6-8786-88e948053eb0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "simple": false,
+        "filters": {
+          "receivedAfter": "={{ $now.minus({ days: 1 }).toISO() }}\n"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -8160,
+        5936
+      ],
+      "id": "70acd650-a15a-4a13-8c12-de48f0279cda",
+      "name": "Get many messages",
+      "webhookId": "96ea6d5e-053e-44f2-bac9-6fb28718f976",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "gpt-5.2"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -6080,
+        7024
+      ],
+      "id": "ef6a1017-fee2-461a-8626-c168139e6451",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7f30bbd3-c0f3-4126-8f5e-a754dbd8911a",
+              "leftValue": "={{ $('If3').item.json.output.IsInvoice }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bc348115-4553-464e-8afa-88365353692a",
+              "leftValue": "={{ $('If3').item.json.output.IsInvoice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -5296,
+        5840
+      ],
+      "id": "c4461ebc-4d24-4138-975c-409384d89ff7",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "d683b3bb-0bd5-4bcd-b904-4936fd844a7b",
+      "name": "Wait 5 Seconds",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -6848,
+        5824
+      ],
+      "webhookId": "16c25b92-e164-42fa-8b99-4709268436ca"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7f30bbd3-c0f3-4126-8f5e-a754dbd8911a",
+              "leftValue": "={{ $('If3').item.json.output.IsInvoice }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bc348115-4553-464e-8afa-88365353692a",
+              "leftValue": "={{ $('If3').item.json.output.IsInvoice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4848,
+        6368
+      ],
+      "id": "c39ddb82-07d0-45eb-b05f-a8d257233c1e",
+      "name": "If2"
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19bb71bc6b02905b",
+          "threadId": "19bb71a8d33745bf",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "SENT",
+            "INBOX"
+          ],
+          "sizeEstimate": 3367184,
+          "headers": {
+            "mime-version": "MIME-Version: 1.0",
+            "date": "Date: Tue, 13 Jan 2026 16:56:49 +0530",
+            "message-id": "Message-ID: <CAH22N+iUAreSMEq+2EEbdjB4t8-u0e7M4rvuPa6OAsWoQnck-g@mail.gmail.com>",
+            "subject": "Subject: 2nd one",
+            "from": "From: Aarush Bisht <aarush.bisht@mindtickle.com>",
+            "to": "To: Aarush Bisht <aarush.bisht@mindtickle.com>",
+            "content-type": "Content-Type: multipart/mixed; boundary=\"00000000000080024706484344f2\""
+          },
+          "html": "<div dir=\"ltr\">kya lagta?</div>\n",
+          "text": "kya lagta?\n",
+          "textAsHtml": "<p>kya lagta?</p>",
+          "subject": "2nd one",
+          "date": "2026-01-13T11:26:49.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "aarush.bisht@mindtickle.com",
+                "name": "Aarush Bisht"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Aarush Bisht</span> &lt;<a href=\"mailto:aarush.bisht@mindtickle.com\" class=\"mp_address_email\">aarush.bisht@mindtickle.com</a>&gt;</span>",
+            "text": "\"Aarush Bisht\" <aarush.bisht@mindtickle.com>"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "aarush.bisht@mindtickle.com",
+                "name": "Aarush Bisht"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Aarush Bisht</span> &lt;<a href=\"mailto:aarush.bisht@mindtickle.com\" class=\"mp_address_email\">aarush.bisht@mindtickle.com</a>&gt;</span>",
+            "text": "\"Aarush Bisht\" <aarush.bisht@mindtickle.com>"
+          },
+          "messageId": "<CAH22N+iUAreSMEq+2EEbdjB4t8-u0e7M4rvuPa6OAsWoQnck-g@mail.gmail.com>"
+        },
+        "binary": {
+          "attachment_0": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "Aarush_Bisht_MNDA_MindTickle_India_Candidate.pdf",
+            "id": "filesystem-v2:workflows/DFdjYhIuaDfA3NrM/executions/9808/binary_data/97c8dec8-5e92-46d5-a5c2-5bb58a8e98d7",
+            "fileSize": "267 kB"
+          },
+          "attachment_1": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "Plag Print.pdf",
+            "id": "filesystem-v2:workflows/DFdjYhIuaDfA3NrM/executions/9808/binary_data/23ae5c37-a586-4dad-86f0-8a527a28066b",
+            "fileSize": "651 kB"
+          },
+          "attachment_2": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "Final & Revised Invoice - OneFoods.pdf",
+            "id": "filesystem-v2:workflows/DFdjYhIuaDfA3NrM/executions/9808/binary_data/997ded26-c0ad-4813-913a-0c63884e1cb0",
+            "fileSize": "199 kB"
+          },
+          "attachment_3": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "sample-invoice.pdf",
+            "id": "filesystem-v2:workflows/DFdjYhIuaDfA3NrM/executions/9808/binary_data/bb0756d9-3d34-4ea4-8047-1ed2956aeb2c",
+            "fileSize": "382 kB"
+          },
+          "attachment_4": {
+            "mimeType": "image/png",
+            "fileType": "image",
+            "fileExtension": "png",
+            "data": "filesystem-v2",
+            "fileName": "Untitled diagram-2025-11-14-062817.png",
+            "id": "filesystem-v2:workflows/DFdjYhIuaDfA3NrM/executions/9808/binary_data/500d56e9-c40c-4a00-8ea1-691f33f0715f",
+            "fileSize": "960 kB"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait 5 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Document Processing2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Processing2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Add label to message1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 Seconds1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 Seconds1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Document Processing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Processing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If7": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "If8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If8": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1fcd7b6a-e833-47b8-8e7f-d3f063e4cc98",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f39d8fdd402ddce20d0eb724526828e8c2d8679170e3a08fe6cd471c799fab6"
+  },
+  "id": "DFdjYhIuaDfA3NrM",
+  "tags": []
+}

@@ -1,0 +1,506 @@
+{
+  "name": "Document Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"message\": \"null\",\n  \"id\": \"null\",\n  \"name\":\"null\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        -256
+      ],
+      "id": "bb1a8e19-7709-4d4b-b697-5ef924e3eb9e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        -256
+      ],
+      "id": "13767d06-b54e-4ed7-b31f-62ed223eacb3",
+      "name": "Get a message1",
+      "webhookId": "e99cf6bf-3c98-4dcf-97b6-27e376381661",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -256
+      ],
+      "id": "1115910b-e2d4-4b94-b4d6-9ccde009df7f",
+      "name": "Extract from File",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsonSchema": "{\n  \"invoice_date\": \"YYYY-MM-DD\",  \n  \"invoice_number\": \"string\",\n  \"purchase_order_number\": \"string\",\n  \"customer_name\": \"string\",\n  \"customer_vat_id\": \"string\",\n  \"customer_address\": \"string\",\n  \"total_price_excluding_vat\": \"float\",\n  \"total_price_including_vat\": \"float\"\n}\n"
+      },
+      "id": "917c1382-6aa8-42b3-bd89-73d06861c9de",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1488,
+        -32
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Use LLMs to Structure Data\n[Airtable Documentation](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.airtable/?utm_source=n8n_app&utm_medium=node_settings_modal-credential_link&utm_campaign=n8n-nodes-base.airtable)\n",
+        "height": 517,
+        "width": 933,
+        "color": 7
+      },
+      "id": "74cb2b5d-65ff-4b0b-a7b5-f83e8e1bcafa",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        -416
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c804c9dd-38c9-4643-b9f6-1bf701f1e4a9",
+              "name": "IsInvoice",
+              "value": "={{ $json.output.IsInvoice }}",
+              "type": "string"
+            },
+            {
+              "id": "ab760d8f-9332-47e8-8045-12337fb0f12a",
+              "name": "fileName",
+              "value": "={{ $('When Executed by Another Workflow').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "84dd481d-2947-4cf9-9754-e1548415b31e",
+      "name": "Map Output",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1696,
+        -256
+      ],
+      "typeVersion": 3.3
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Context:\nYou are an advanced AI model trained to extract structured information from Text. Given a mail's content in text or OCR format, you will identify wheather the given mail is an invoice or not. On the basis of the content of the mail return true if the provided mail is an invoice or false if any other kind of mail. 99% of the time there will be invoice number and invoice date in the mail content. Return the true of false in the field named \"IsInvoice\".\n\nTask:\nExtract the following details from the invoice:\nInvoice Date\nInvoice Number\n\nResponse Format:\nReturn the boolean value true or false after analysing the content.\n\n<invoice>{{ $json.text }}</invoice>\n",
+        "hasOutputParser": true
+      },
+      "id": "8514e2ee-092f-4125-b3b1-3394d9deab45",
+      "name": "Apply Data Extraction Rules",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1344,
+        -256
+      ],
+      "typeVersion": 1.4
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        32
+      ],
+      "id": "5b2a3e26-3adf-4be0-a5ca-149ea23bdeaf",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l44pTMbow521VBZM",
+          "name": "Google Gemini(PaLM) Api account - Aarush"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "57a7b497-6351-4c17-b18a-ef2e8712f10c",
+              "leftValue": "={{$binary[\"attachment_0\"][\"fileName\"]}}",
+              "rightValue": "={{ $('When Executed by Another Workflow').item.json.name }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -256
+      ],
+      "id": "aa84c143-0f24-4a16-9e57-859035c28c36",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "$binary,threadId",
+        "include": "allOtherFields",
+        "options": {
+          "includeBinary": true
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -256
+      ],
+      "id": "46f661fe-1408-435e-9681-8aab04c65aaf",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over all input items and create new items\nconst newItems = $input.all().map((item, idx) => {\n  const newItem = { json: {}, binary: {} };\n  // Take the first binary file and rename it as 'attachment_0'\n  if (item.binary) {\n    const firstKey = Object.keys(item.binary)[0];\n    newItem.binary['attachment_0'] = item.binary[firstKey];\n  }\n  return newItem;\n});\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -256
+      ],
+      "id": "6f0c3fb2-48e7-4ec7-ad11-cda706cc1775",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5671686a-8d96-49da-afff-58c905c40711",
+              "leftValue": "={{$binary[\"attachment_0\"][\"fileExtension\"]}}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        -288
+      ],
+      "id": "1fa9096f-8619-47c9-9473-89805e246d05",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1f9dad57-2682-48bd-ab4e-81359c0f8ebd",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        -256
+      ],
+      "id": "1c46734f-ecd9-4c34-a3ff-aff326b5aa8c",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "295e781d-6aff-4c23-a0e1-50f77710fe31",
+              "name": "IsInvoice",
+              "value": "false",
+              "type": "string"
+            },
+            {
+              "id": "d8169e7a-d55a-4bf3-9be1-2663dd6aad2b",
+              "name": "fileName",
+              "value": "={{ $('When Executed by Another Workflow').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1264,
+        240
+      ],
+      "id": "2e1b8597-081a-4caa-a748-acb61a950962",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-chat-latest",
+          "mode": "list",
+          "cachedResultName": "gpt-5-chat-latest"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        -48
+      ],
+      "id": "bc23135f-6c4d-454e-9883-8b130db91dd8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SSZ5R0vqJTYpbWSG",
+          "name": "mindtickle openai cred"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Apply Data Extraction Rules": [
+      {
+        "json": {
+          "output": {
+            "IsInvoice": true,
+            "InvoiceDate": "08/06/2025",
+            "InvoiceNumber": "00206"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Apply Data Extraction Rules",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Data Extraction Rules": {
+      "main": [
+        [
+          {
+            "node": "Map Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Apply Data Extraction Rules",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Apply Data Extraction Rules",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ce898ba-67af-4f76-8634-9bec3191d1b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f39d8fdd402ddce20d0eb724526828e8c2d8679170e3a08fe6cd471c799fab6"
+  },
+  "id": "sGO5yzSXmg1mXEUE",
+  "tags": []
+}

@@ -1,0 +1,3246 @@
+{
+  "name": "RevUp-Production",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.token }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "76941e23-d8c8-4640-a851-70612eaab1fe",
+      "name": "Token Obtained?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.flag }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    },
+                    "id": "8739242f-d7bf-40d3-8ed1-8c8a32261746"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8d1172b5-6d06-41ea-a5d3-14bed86841e1",
+                    "leftValue": "={{ $json.flag }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1328,
+        816
+      ],
+      "id": "b35abed6-4ad9-4c06-87fb-3ee3988c1d84",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data =\n  $json.validatedData ||\n  $json.body?.data ||\n  $json.body ||\n  {};\n\n$json.flag = !!data.employeeId || !!data.id;\nreturn $json;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1712,
+        928
+      ],
+      "id": "0207f13b-2c1a-45da-8c6f-598d3a750643",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input validation for HiBob webhook data\nconst body = $json.body || $json;\nconst data = body.data || body;\n\n// Check for required employee data\nif (!data.primaryEmail && !data.id) {\n  return [{\n    json: {\n      error: \"Missing required employee data (email or employeeId)\",\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Validation passed\nreturn [{\n  json: {\n    validatedData: data,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1904,
+        928
+      ],
+      "id": "72380d78-34a2-47a1-8349-f4830acd103c",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/v4.0/mtobjects/User",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ JSON.stringify({\"Authorization\": \"Bearer \"+ $('Get Auth Token').item.json.token, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('searching for user info2').item.json.employees[0].fullName }}\",\n  \"username\": \"{{ $('searching for user info2').item.json.employees[0].fullName }}\",\n  \"email\":\"{{ $('searching for user info2').item.json.employees[0][\"/root/email\"].value }}\",\n  \"timezone\": \"\",\n  \"managers\": [{\n    \"email\":\"{{ $('searching for user info2').item.json.employees[0][\"/work/reportsTo/email\"].value }}\",\n    \"key\": \"a_1\"\n  }],\n  \"profile\":{\n    \"a_7\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.customColumns.column_1732603686850 }}\",\n    \"a_8\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.department }}\",\n    \"rg\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.siteId }}\",\n    \"dg\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.title }}\",\n    \"a_18\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.activeEffectiveDate }}\",\n    \"a_11\":\"{{ $('searching for user info2').item.json.employees[0].humanReadable.work.originalStartDate }}\",\n    \"a_1\":\"{{ $('searching for user info2').item.json.employees[0].displayName }}\"\n  },\n  \"source\": \"api_user\"\n}\n",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        768
+      ],
+      "id": "2155ee36-6267-44ff-8de6-3e041b665725",
+      "name": "create user",
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/v4.0/mtobjects/Users/delete",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ JSON.stringify({\"Authorization\": \"Bearer \"+$('Get Auth Token - termination edition').item.json.token, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[{\n  \"email\":\"{{ $json.employees[0].email }}\"\n}]\n",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -704,
+        1424
+      ],
+      "id": "8fee6672-9376-4930-b372-ba1943f13349",
+      "name": "delete user",
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.token }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6efb6441-3845-45ff-88f4-592351ea12f2",
+      "name": "Token Obtained?1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Switch 1\nAccording to the data fetched by web hook , this node segregates the workflow on the bases of updation type. It specifically deals with complete **deletion of user , creation of new user** or the case where **user is terminated** via a schedule (in hi bob ). ",
+        "height": 432,
+        "width": 384,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3456,
+        752
+      ],
+      "typeVersion": 1,
+      "id": "f26d47e9-8823-4913-8a58-9bd4fece0e59",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Initial Web hook \nThis web hook fetches data from hi bob automatically when an event ( marked for web hook activation ) is triggered.",
+        "height": 272,
+        "width": 304,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3920,
+        816
+      ],
+      "typeVersion": 1,
+      "id": "3d87fad0-6cec-4c89-9386-d1ae92716c79",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Get information about user\nIn here , we are trying to retrieve more data about the user as we got only employee id which is specific to hi bob in our web hook.",
+        "height": 320,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2960,
+        800
+      ],
+      "typeVersion": 1,
+      "id": "a4056ed7-881d-446b-ade7-7cde32e3d521",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Extracting required data\nThese node extract the data we specifically require and also are important for transforming data.",
+        "height": 288,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1936,
+        800
+      ],
+      "typeVersion": 1,
+      "id": "d0411b21-a544-4515-8ab3-d1ff5b82fd85",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Authentication \nthis node deals with the authentication on our platform mindtickle pathshala. It uses API key and secret key to generate a bearer token which is further used in authentication.",
+        "height": 320,
+        "width": 432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1136,
+        624
+      ],
+      "typeVersion": 1,
+      "id": "88624577-e70d-4696-8e69-cf648318b157",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## Authentication \nthis node deals with the authentication on our platform mindtickle pathshala. It uses API key and secret key to generate a bearer token which is further used in authentication.",
+        "height": 352,
+        "width": 464,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2112,
+        1344
+      ],
+      "typeVersion": 1,
+      "id": "c5d41706-740a-4ce0-ad72-b32ad04044ef",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## Getting User (terminated) data\nHere we are trying to fetch the data of a terminated user from hi bob **( especially email )** to use that in our HTTP request for termination in Mindtickle platform too.",
+        "height": 352,
+        "width": 416,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1376,
+        1248
+      ],
+      "typeVersion": 1,
+      "id": "50b42ac4-aa21-47b0-936c-36a8cf261e09",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "## Deactivation of user on Mindtickle\nusing the email which we received in our previous node , we Deactivate the user on Mindtickle.",
+        "height": 352,
+        "width": 272,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -784,
+        1248
+      ],
+      "typeVersion": 1,
+      "id": "b9d949e7-dca9-4471-b12c-5bf50cd6ecfd",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "## Making date format digestible \nHere we are converting data format in *mm-dd-yyyy* format for us to pass the information of user creation date in our next node.",
+        "height": 320,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2608,
+        608
+      ],
+      "typeVersion": 1,
+      "id": "debdc869-8cd2-4d56-b4ff-00fda7d88d23",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## User Creation on Mindtickle  \nNow we pass all the gathered information in our HTTP request to create a user",
+        "height": 320,
+        "width": 352,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        608
+      ],
+      "typeVersion": 1,
+      "id": "a87d7a0f-a74d-4b66-9519-8fab40a5ed1d",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/auth_token",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"api_key\": \"b8c10472ee003bd973a0af0f128e4143c006b57d\",\n  \"secret_key\": \"76bfbfda3fdf09b36dbcca59be1ec1b0a08b74ca969a530914bbea81ce4b44cf513070dcfd727fa67599eec7a3072b87\",\n  \"ls_url\": \"https://revup.mindtickle.com\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "285cfd6c-af90-4694-bfc7-cfc32d50f9ff",
+      "name": "Get Auth Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1056,
+        784
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the current item\nconst item = $input.item.json;\n\n// Access the first employee safely\nconst emp = item.employees?.[0];\nif (emp && emp.humanReadable?.work?.originalStartDate) {\n  const dateStr = emp.humanReadable.work.originalStartDate; // \"01/10/2025\"\n  const [day, month, year] = dateStr.split(\"/\");\n\n  // Convert to mm-dd-yyyy\n  emp.humanReadable.work.originalStartDate = `${month}-${day}-${year}`;\n}\n\n// Return updated data\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2480,
+        768
+      ],
+      "id": "79fd7635-6caf-4327-b88b-31becab2e13b",
+      "name": "formatting date (JS)"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f2e53b14-a0fe-48d9-9cb1-fbe503d8a9d4",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.updated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6654f651-7917-4f04-a219-f42dbb3cc0f1"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bdf0d874-3125-42be-86ed-8ab5f710347b",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.deleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "141992f6-76be-429b-933f-fae2e11aed47",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.inactivated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "01e84ac0-8494-4bb6-ab1f-ba6dea29ad60",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.terminated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c3fccf48-4a6c-4aed-b22e-63d6fec01ef8",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.left",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cd87c7e0-811b-43c1-bcd5-f0edd70cec55",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "employee.activated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -3312,
+        928
+      ],
+      "id": "348e0f8b-feaf-4910-9426-e107c56b17e9",
+      "name": "Switch 1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/auth_token",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"api_key\": \"b8c10472ee003bd973a0af0f128e4143c006b57d\",\n  \"secret_key\": \"76bfbfda3fdf09b36dbcca59be1ec1b0a08b74ca969a530914bbea81ce4b44cf513070dcfd727fa67599eec7a3072b87\",\n  \"ls_url\": \"https://revup.mindtickle.com\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "4156fbc4-f0ab-48c2-afe4-ef34000ac3de",
+      "name": "Get Auth Token - termination edition",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2064,
+        1504
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0d4bc80-4e36-432e-8016-7689bb535979",
+              "leftValue": "={{ $json.employees[0][\"/root/email\"].value }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        1408
+      ],
+      "id": "93d1d0d6-8456-433d-86d4-6ddfd92dcf56",
+      "name": "email obtained?"
+    },
+    {
+      "parameters": {
+        "content": "## Switch 3\nJust check if the data is present or did the data which we specifically needed is empty.",
+        "height": 288,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1408,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "eb2772d0-38d7-4bd5-9ec5-31308678046d",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cf3d6429-2fe9-4e3a-8938-48ba576e40e3",
+              "leftValue": "={{ $json.taskCompleted }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        720
+      ],
+      "id": "b0ca03b9-fc57-41ef-b284-a558d792c5e7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "69212612-bbb5-46a7-bc34-3a135a625274",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -384,
+        1424
+      ],
+      "id": "cbaf4163-61f0-4773-a517-ff395d1cdf1c",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "sendTo": "aaaabisht14@gmail.com",
+        "subject": "problem",
+        "emailType": "text",
+        "message": "bhai error ka message aa gaya.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        384
+      ],
+      "id": "f2bf4ae0-aa9f-4090-a001-b0b1a1389500",
+      "name": "Send a message8",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "79CmmycMIrmrM7iU",
+          "name": "Gmail account - aarush mindtickle"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        384
+      ],
+      "id": "76467fb8-8249-4213-b19f-f1589d290578",
+      "name": "Send a message9",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/auth_token",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"api_key\": \"b8c10472ee003bd973a0af0f128e4143c006b57d\",\n  \"secret_key\": \"76bfbfda3fdf09b36dbcca59be1ec1b0a08b74ca969a530914bbea81ce4b44cf513070dcfd727fa67599eec7a3072b87\",\n  \"ls_url\": \"https://revup.mindtickle.com\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "05cd45e9-aa75-4f02-b94c-e20d0e9a1160",
+      "name": "Get Auth Token1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1680,
+        192
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.token }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6e7a24e4-f540-4446-b857-a41511f6a6b5",
+      "name": "Token Obtained?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1472,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hibob.com/v1/people/search",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"authorization\": \"Basic U0VSVklDRS0zMDEzMTozdEs3SVNabnRPWDI0c3FyR1hOS21rVmtKZmthUU1XTGxNVmtmb3ZC\",\n  \"accept\": \"application/json\",\n  \"content-type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filters\": [\n    {\n      \"fieldPath\": \"root.id\",\n      \"operator\": \"equals\",\n      \"values\": [\"{{ $('Webhook').item.json.body.data.employeeId }}\"]\n    }\n  ],\n  \"showInactive\": false,\n  \"humanReadable\": \"APPEND\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3008,
+        512
+      ],
+      "id": "1cef1dc5-c246-455d-b991-2b057b8f73d5",
+      "name": "searching for user info1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the current item\nconst item = $input.item.json;\n\n// Access the first employee safely\nconst emp = item.employees?.[0];\nif (emp && emp.humanReadable?.work?.originalStartDate) {\n  const dateStr = emp.humanReadable.work.originalStartDate; // \"01/10/2025\"\n  const [day, month, year] = dateStr.split(\"/\");\n\n  // Convert to mm-dd-yyyy\n  emp.humanReadable.work.originalStartDate = `${month}-${day}-${year}`;\n}\n\n// Return updated data\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        176
+      ],
+      "id": "44c51af8-a0a1-441f-9cfb-d8075793856b",
+      "name": "formatting date (JS)1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mindtickle.com/services/data/v4.0/mtobjects/Users",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ JSON.stringify({\"Authorization\": \"Bearer \"+ $('Get Auth Token1').item.json.token, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"emails\": [\"{{ $('Get a user1').item.json.primaryEmail }}\"]}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -576,
+        176
+      ],
+      "id": "6bc1a2d9-168f-44a5-b226-ec83aea7f9c8",
+      "name": "create user2",
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "content": "## Authentication \nthis node deals with the authentication on our platform mindtickle pathshala. It uses API key and secret key to generate a bearer token which is further used in authentication.",
+        "height": 320,
+        "width": 432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1744,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "5e92549f-956d-4592-9c75-eebf927d4b4d",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "## Get information about user\nIn here , we are trying to retrieve more data about the user as we got only employee id which is specific to hi bob in our web hook.",
+        "height": 320,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3120,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "21af12ed-afb0-42b0-adf4-e08b33782938",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "## Making date format digestible \nHere we are converting data format in *mm-dd-yyyy* format for us to pass the information of user creation date in our next node.",
+        "height": 320,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1152,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "217aa241-e50f-417d-8d22-188a04c42cc2",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.mindtickle.com/services/data/v4.0/mtobjects/User/{{ $json.users[0].id }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ JSON.stringify({\"Authorization\": \"Bearer \"+ $('Get Auth Token1').item.json.token, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('searching for user info1').item.json.employees[0].fullName }}\",\n  \"username\": \"{{ $('searching for user info1').item.json.employees[0].displayName }}\",\n  \"email\":\"{{ $('searching for user info1').item.json.employees[0][\"/root/email\"].value }}\",\n  \"timezone\": \"\",\n  \"managers\": [{\n    \"email\": \"{{ $('searching for user info1').item.json.employees[0][\"/work/reportsTo/email\"].value }}\",\n    \"key\": \"a_1\"\n  }],\n  \"profile\":{\n    \"a_7\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.customColumns.column_1732603686850 }}\",\n    \"a_8\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.department }}\",\n    \"rg\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.siteId }}\",\n    \"dg\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.title }}\",\n    \"a_18\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.originalStartDate }}\",\n    \"a_11\":\"{{ $('searching for user info1').item.json.employees[0].humanReadable.work.activeEffectiveDate }}\"\n  },\n  \"source\": \"api_user\"\n}\n",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        160
+      ],
+      "id": "6ed9fb07-e71f-4f49-be95-4673080b6a2b",
+      "name": "Update User",
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "content": "## Get User id ( for params )\nThis node fetches the user id from minditickle site which is used in api request and helps target the intended user.",
+        "height": 320,
+        "width": 320,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -688,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "0dcdff70-5da7-4ef2-8a52-e1c4763feb22",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Update User Information\nUpdates the information of the updated user.",
+        "height": 320,
+        "width": 304,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "6e5f7728-2af8-4137-889c-f96f219c7080",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4",
+          "mode": "list",
+          "cachedResultName": "Do not delete - Revup - n8n users log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Hibob_id": "={{ $('If5').item.json.employees[0].id }}",
+            "Status": "Unlicensed"
+          },
+          "matchingColumns": [
+            "Hibob_id"
+          ],
+          "schema": [
+            {
+              "id": "Hibob_id",
+              "displayName": "Hibob_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1904,
+        1120
+      ],
+      "id": "81472597-99f5-4d4a-a7f1-343f57274ff1",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ScWmU72sKPKXpMWQ",
+          "name": "Google Sheets account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3728,
+        1264
+      ],
+      "id": "407be4f5-2695-4042-81fe-d9b7e9b48f3b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8c442a11-7753-4080-97bc-b1321112fbf1",
+              "leftValue": "={{ $json.users[0].id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        176
+      ],
+      "id": "e02f9436-0cdc-4a13-b00b-b5a4639cb8b2",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst updates = $node[\"Webhook\"].json.body.data.fieldUpdatesIds.map(f => f.id);\n\nconst targetFields = [\n  \"work.site\",\n  \"work.department\",\n  \"work.siteId\",\n  \"work.customColumns.column_1732603686850\",\n  \"work.workChangeType\",\n  \"work.title\",\n  \"work.activeEffectiveDate\",\n  \"work.reportsTo\",\n  \"root.displayName\"\n];\n\nconst check = updates.some(id => targetFields.includes(id));\n\nreturn [{ check}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2224,
+        320
+      ],
+      "id": "7e8b7768-aa58-4218-98bb-24008a7ea4ef",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "757dd4b7-960a-400f-beab-e6e5f2d8b69f",
+              "leftValue": "={{ $json.check }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2048,
+        272
+      ],
+      "id": "fb1b2c3f-ef67-4f9b-bfe1-018ec3a1e29d",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "userId": {
+          "__rl": true,
+          "value": "={{ $('searching for user info2').item.json.employees[0][\"/root/email\"].value }}",
+          "mode": "userEmail"
+        }
+      },
+      "type": "n8n-nodes-base.gSuiteAdmin",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        944
+      ],
+      "id": "f75721d8-9bc2-4c14-9aa4-bbfd1d9e2bed",
+      "name": "Get a user",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gSuiteAdminOAuth2Api": {
+          "id": "QOlqm9w5779Q8jUM",
+          "name": "GWS - G & A Automation Project"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a4c66e27-6798-4d31-bcd4-9f6d425b5040",
+              "leftValue": "={{ $json.employees[0].fullName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2560,
+        960
+      ],
+      "id": "e389d757-4e28-44b6-a462-bf74e61e4692",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "efbc63f2-6ea6-45c7-800a-cf6a6ff8b8c0",
+              "leftValue": "={{ $json.suspended }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "49f7c7ad-5782-4087-b66a-5fbb1d2908fe",
+              "leftValue": "={{ $json.suspended }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2144,
+        928
+      ],
+      "id": "3924aca4-3e8d-4838-87cd-f2f50977367b",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4",
+          "mode": "list",
+          "cachedResultName": "Do not delete - Revup - n8n users log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3520,
+        1264
+      ],
+      "id": "5bc74a12-fdac-4996-9bb1-3888c08fbd42",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rF0x48geiw4T2qy3",
+          "name": "Google Sheets account 9"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "row_number, Hibob_id, Status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -3312,
+        1264
+      ],
+      "id": "d6fd96c0-c9e2-484d-be14-c2321616b6bb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1GwwIDnRt9_3woIUtebklpH3ZEXyY3JYZESeAej2UnCw",
+          "mode": "list",
+          "cachedResultName": "for n8n",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GwwIDnRt9_3woIUtebklpH3ZEXyY3JYZESeAej2UnCw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GwwIDnRt9_3woIUtebklpH3ZEXyY3JYZESeAej2UnCw/edit#gid=0"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2784,
+        1648
+      ],
+      "id": "1a4bf95c-6a57-4a00-9195-0c21695cfa3e",
+      "name": "delete",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rF0x48geiw4T2qy3",
+          "name": "Google Sheets account 9"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4",
+          "mode": "list",
+          "cachedResultName": "Do not delete - Revup - n8n users log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s8c6-hmW61DIod3FNX6-wnc5JfxCzKq8DPqbrRnmkF4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Hibob_id": "={{ $('If5').item.json.employees[0].id }}",
+            "Status": "licensed"
+          },
+          "matchingColumns": [
+            "Hibob_id"
+          ],
+          "schema": [
+            {
+              "id": "Hibob_id",
+              "displayName": "Hibob_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1824,
+        592
+      ],
+      "id": "4393a4b3-2d24-4a38-97bc-765e17053b04",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ScWmU72sKPKXpMWQ",
+          "name": "Google Sheets account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7073d904-c36d-4298-9e54-9999eaa5a508",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Unlicensed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3104,
+        1264
+      ],
+      "id": "dd3c6ea5-e5b6-43a8-a12f-a4e8146a14bb",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a4c66e27-6798-4d31-bcd4-9f6d425b5040",
+              "leftValue": "={{ $json.employees[0].fullName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2768,
+        512
+      ],
+      "id": "d0f4ecfb-97c6-4f57-9ac4-87a073ec3e5d",
+      "name": "If7"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "userId": {
+          "__rl": true,
+          "value": "={{ $json.employees[0][\"/root/email\"].value }}",
+          "mode": "userEmail"
+        }
+      },
+      "type": "n8n-nodes-base.gSuiteAdmin",
+      "typeVersion": 1,
+      "position": [
+        -2592,
+        432
+      ],
+      "id": "9348c22e-4ae0-4f62-b2ad-730e1ce664e1",
+      "name": "Get a user1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gSuiteAdminOAuth2Api": {
+          "id": "QOlqm9w5779Q8jUM",
+          "name": "GWS - G & A Automation Project"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "efbc63f2-6ea6-45c7-800a-cf6a6ff8b8c0",
+              "leftValue": "={{ $json.suspended }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "49f7c7ad-5782-4087-b66a-5fbb1d2908fe",
+              "leftValue": "={{ $json.suspended }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2416,
+        368
+      ],
+      "id": "8c408903-1900-4eb1-9450-a34abeb1d50f",
+      "name": "If8"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User {{ $('searching for user info1').item.json.employees[0].fullName }} created successfully",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        16
+      ],
+      "id": "e14894e5-c5b8-47b0-b46e-07c713848ff8",
+      "name": "Send a message11",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09Q8AK6VDK",
+          "mode": "list",
+          "cachedResultName": "social"
+        },
+        "text": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" is created successfully. ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        1040
+      ],
+      "id": "2658eb3c-b886-423b-8b57-38cacd33a3b8",
+      "name": "Send a message12",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "SOTXcMYedd0L8Uvq",
+          "name": "Slack account 9"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca0c5ff7-5551-47f4-bf1d-6e3980f7d68e",
+              "leftValue": "={{ $('searching for user info').item.json.employees[0][\"/work/reportsTo/email\"].value }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -544,
+        768
+      ],
+      "id": "909519bd-2c23-4396-8ffb-58f32026587d",
+      "name": "check manager"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1744,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "36b25c35-70b6-4f8d-bf76-83addb95ead6",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3120,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "6ceff47e-d70d-4b69-80f4-67d9879ae140",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hibob.com/v1/people/search",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"authorization\": \"Basic U0VSVklDRS0zMDEzMTozdEs3SVNabnRPWDI0c3FyR1hOS21rVmtKZmthUU1XTGxNVmtmb3ZC\",\n  \"accept\": \"application/json\",\n  \"content-type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filters\": [\n    {\n      \"fieldPath\": \"root.id\",\n      \"operator\": \"equals\",\n      \"values\": [\"\"]\n    }\n  ],\n  \"showInactive\": false,\n  \"humanReadable\": \"APPEND\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2832,
+        944
+      ],
+      "id": "e4d4e566-4fc0-4139-8c1d-46f52cc71fd8",
+      "name": "searching for user info2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hibob.com/v1/people/search",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"authorization\": \"Basic U0VSVklDRS0zMDEzMTozdEs3SVNabnRPWDI0c3FyR1hOS21rVmtKZmthUU1XTGxNVmtmb3ZC\",\n  \"accept\": \"application/json\",\n  \"content-type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filters\": [\n    {\n      \"fieldPath\": \"root.id\",\n      \"operator\": \"equals\",\n      \"values\": [\"{{ $('Webhook').item.json.body.data.employeeId }}\"]\n    }\n  ],\n  \"showInactive\": false,\n  \"humanReadable\": \"APPEND\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        1408
+      ],
+      "id": "f250a0e9-3a94-44f9-9d1a-d1a0f9d8b17e",
+      "name": "searching for user info"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1376,
+        1168
+      ],
+      "typeVersion": 1,
+      "id": "a1cf6656-2372-471d-8226-73b368b53d74",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2992,
+        912
+      ],
+      "typeVersion": 1,
+      "id": "cb4dac65-434b-4f01-a4d2-42bc19073ac0",
+      "name": "Sticky Note19"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1136,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "628fcec6-a5f6-4fc3-a28e-9fdcb6b4b758",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1152,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "0032ab15-5472-4aef-8a58-ac6ed9eeac50",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2112,
+        1696
+      ],
+      "typeVersion": 1,
+      "id": "5a05cf9f-5a01-4877-8bea-3784e6ff8566",
+      "name": "Sticky Note22"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2368,
+        1088
+      ],
+      "typeVersion": 1,
+      "id": "b1b8e1aa-cf97-4dd6-b86e-c1d8bc975f22",
+      "name": "Sticky Note23"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2624,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "0677fd67-6d66-401e-bd31-b469a7674359",
+      "name": "Sticky Note24"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3536,
+        1408
+      ],
+      "typeVersion": 1,
+      "id": "f7f1edc2-10ef-4975-adf5-314c1f6b9f27",
+      "name": "Sticky Note25"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1792,
+        1136
+      ],
+      "typeVersion": 1,
+      "id": "c4338daa-5e2c-44bf-9632-8bfbbf44620c",
+      "name": "Sticky Note26"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1856,
+        496
+      ],
+      "typeVersion": 1,
+      "id": "1c92834d-fac6-4cfc-b498-45bcb4a279b7",
+      "name": "Sticky Note27"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "db302dc3-d8a4-4a17-bf62-9401ca2e246a",
+              "leftValue": "status",
+              "rightValue": "200",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "c6310fc2-4c16-40d6-95de-33c9177c6d9b",
+              "leftValue": "={{ $json.taskCompleted }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        160
+      ],
+      "id": "a44c3206-fda2-4448-b1d5-0ac9f1087ddf",
+      "name": "If9"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 80,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4080,
+        928
+      ],
+      "typeVersion": 1,
+      "id": "30e1dc42-4aa3-4240-b2cc-14c9fb725431",
+      "name": "Sticky Note28"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "08afb847-247f-43cc-b2dd-fd0d0116bfa9",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3824,
+        944
+      ],
+      "id": "a5c1abfe-6ee1-4e90-acd6-5a2b99d1558f",
+      "name": "Webhook",
+      "webhookId": "08afb847-247f-43cc-b2dd-fd0d0116bfa9"
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        384
+      ],
+      "id": "5bac7bc3-41b6-4936-81d6-d26b9d783888",
+      "name": "Send a message23",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        224
+      ],
+      "id": "043ec30a-cabb-4e06-a248-298a88827da3",
+      "name": "Send a message10",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        224
+      ],
+      "id": "cd7915be-ef6d-41ee-a0b2-14a10b5938d6",
+      "name": "Send a message24",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        800
+      ],
+      "id": "34374aa1-7730-4c2b-9944-ccd6cf978e88",
+      "name": "Send a message22",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        800
+      ],
+      "id": "f4f67153-c9d0-4cbc-b788-6ad75ab9ede6",
+      "name": "Send a message25",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        1536
+      ],
+      "id": "068c7f9f-4637-4692-a35e-b310eab8dcde",
+      "name": "Send a message26",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        1536
+      ],
+      "id": "55ca63d5-cf11-40d4-9fe5-a5c584f271f9",
+      "name": "Send a message27",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -624,
+        1696
+      ],
+      "id": "bdc037d3-d6e9-41cb-a250-07954ee641b3",
+      "name": "Send a message28",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        1696
+      ],
+      "id": "7d2049bd-595f-4c5a-8e9f-9d461fff1e3d",
+      "name": "Send a message29",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User deletion/termination failed. Authentication problem in the flow. ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1280,
+        1792
+      ],
+      "id": "d229e708-cc84-4a55-99f3-657c8b3d3135",
+      "name": "Send a message30",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User deletion/termination failed. Authentication problem in the flow. ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        1792
+      ],
+      "id": "9d16995b-17db-404f-940d-092b53e1bc68",
+      "name": "Send a message31",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "globalpeoplesuccess@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        992
+      ],
+      "id": "a5968fb3-cc8e-429e-8748-186dc342fcbf",
+      "name": "Send a message32",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "satyapraveen.meesala@mindtickle.com",
+        "subject": "User updation failed !",
+        "emailType": "text",
+        "message": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -704,
+        992
+      ],
+      "id": "b131fff4-3e03-47dc-9173-670ef4faec2d",
+      "name": "Send a message33",
+      "webhookId": "90d3bc63-fb6c-4d5f-97a2-a0452e714a48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HQqu7e4HQshEbrKN",
+          "name": "businessapps@mindtickle.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        224
+      ],
+      "id": "68d9f6af-bb61-428e-852e-600c02496c17",
+      "name": "Send a message21",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info1').item.json.employees[0].fullName }}\" is not updated .Updation failed.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        384
+      ],
+      "id": "dc62ba38-0065-4071-89b4-3166c73ca54c",
+      "name": "Send a message34",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" is created successfully. ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        576
+      ],
+      "id": "a224a4e4-c82b-43e6-ad46-412d766157be",
+      "name": "Send a message35",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        800
+      ],
+      "id": "1846d86b-b1ae-46e5-ab0e-76f131d78475",
+      "name": "Send a message36",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" is deleted successfully. ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -144,
+        1312
+      ],
+      "id": "129ca14c-74a7-4ff8-82e6-77b8043bf66c",
+      "name": "Send a message37",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -144,
+        1536
+      ],
+      "id": "ca4d5171-6de3-43d6-87d2-9691ee1d5ac0",
+      "name": "Send a message38",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -880,
+        1664
+      ],
+      "id": "e481dafa-18c1-414a-946f-08797ae8dd29",
+      "name": "Send a message39",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User creation failed for user \"{{ $('searching for user info2').item.json.employees[0].fullName }}\" ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -1136,
+        992
+      ],
+      "id": "5a35d8b7-99c4-417e-8840-071af9562381",
+      "name": "Send a message41",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09QRELF3C4",
+          "mode": "id"
+        },
+        "text": "=User \"{{ $('searching for user info').item.json.employees[0].fullName }}\" deletion/termination failed ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -1552,
+        1760
+      ],
+      "id": "f0054ea0-af05-45c7-8ee3-53d6b4fc8b3b",
+      "name": "Send a message42",
+      "webhookId": "2e8207b8-db21-48a5-ade2-8f4489d597c0",
+      "credentials": {
+        "slackApi": {
+          "id": "LH9yd7treycRKx21",
+          "name": "revup autobot"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2025-11-19T12:00:43.005+05:30",
+          "Readable date": "November 19th 2025, 12:00:43 pm",
+          "Readable time": "12:00:43 pm",
+          "Day of week": "Wednesday",
+          "Year": "2025",
+          "Month": "November",
+          "Day of month": "19",
+          "Hour": "12",
+          "Minute": "00",
+          "Second": "43",
+          "Timezone": "Asia/Calcutta (UTC+05:30)"
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "mt-ba.app.n8n.cloud",
+            "user-agent": "Apache-HttpClient/4.5.14 (Java/21.0.7)",
+            "content-length": "223",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "bob-signature": "u4RhtH9gv6eeTHYkRX66GW+YrX1/ikWt0pQNm5f/wpAjtnie4Mv14OsVeZXF9icedBD6VlgaQKgGF/3fNLJ+/g==",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "54.194.223.66",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "IE",
+            "cf-ray": "9b9336d9c1b0ad15-DUB",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "dd-pathway-ctx-base64": "6FW2v3kFSZ3gj7zk8Wbgj7zk8WY=",
+            "origin": "https://app.hibob.com",
+            "traceparent": "00-695bb8320000000045bd05cdce252332-75ce61331db47de2-00",
+            "tracestate": "dd=s:-1;p:75ce61331db47de2;t.tid:695bb83200000000",
+            "x-datadog-parent-id": "8488829219809557986",
+            "x-datadog-sampling-priority": "-1",
+            "x-datadog-tags": "_dd.p.tid=695bb83200000000",
+            "x-datadog-trace-id": "5025179140700316466",
+            "x-forwarded-for": "54.194.223.66, 162.158.49.76",
+            "x-forwarded-host": "mt-ba.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-39-c65d8f959-xj9qw",
+            "x-is-trusted": "yes",
+            "x-real-ip": "54.194.223.66"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "companyId": 637466,
+            "type": "employee.deleted",
+            "triggeredBy": "3437907703630922742",
+            "triggeredAt": "2026-01-05T13:10:05.090171",
+            "version": "v2",
+            "data": {
+              "employeeId": "3794637953280508673",
+              "email": "abhinav.patel@mindtickle.com"
+            }
+          },
+          "webhookUrl": "https://mt-ba.app.n8n.cloud/webhook/08afb847-247f-43cc-b2dd-fd0d0116bfa9",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Update User": [
+      {
+        "json": {
+          "requestId": null,
+          "responseCode": 0,
+          "responseType": "BULK_RESPONSE",
+          "taskCompleted": true,
+          "processIds": [
+            "2010961720974479361"
+          ]
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Token Obtained?": {
+      "main": [
+        [
+          {
+            "node": "check manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get Auth Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message41",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create user": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete user": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Obtained?1": {
+      "main": [
+        [
+          {
+            "node": "searching for user info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message42",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Auth Token": {
+      "main": [
+        [
+          {
+            "node": "Token Obtained?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatting date (JS)": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch 1": {
+      "main": [
+        [
+          {
+            "node": "searching for user info1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "searching for user info2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Auth Token - termination edition",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Auth Token - termination edition",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Auth Token - termination edition",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Auth Token - termination edition",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "searching for user info2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Auth Token - termination edition": {
+      "main": [
+        [
+          {
+            "node": "Token Obtained?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email obtained?": {
+      "main": [
+        [
+          {
+            "node": "delete user",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message39",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message35",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message36",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a message37",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message38",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Auth Token1": {
+      "main": [
+        [
+          {
+            "node": "Token Obtained?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Obtained?2": {
+      "main": [
+        [
+          {
+            "node": "formatting date (JS)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "searching for user info1": {
+      "main": [
+        [
+          {
+            "node": "If7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatting date (JS)1": {
+      "main": [
+        [
+          {
+            "node": "create user2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create user2": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update User": {
+      "main": [
+        [
+          {
+            "node": "If9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Update User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message34",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Get Auth Token1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a user": {
+      "main": [
+        [
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Get a user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "searching for user info2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If7": {
+      "main": [
+        [
+          {
+            "node": "Get a user1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a user1": {
+      "main": [
+        [
+          {
+            "node": "If8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If8": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check manager": {
+      "main": [
+        [
+          {
+            "node": "create user",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "searching for user info2": {
+      "main": [
+        [
+          {
+            "node": "formatting date (JS)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "searching for user info": {
+      "main": [
+        [
+          {
+            "node": "email obtained?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If9": {
+      "main": [
+        [
+          {
+            "node": "Send a message11",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message9": {
+      "main": [
+        [
+          {
+            "node": "Send a message23",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message10": {
+      "main": [
+        [
+          {
+            "node": "Send a message24",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message22": {
+      "main": [
+        [
+          {
+            "node": "Send a message25",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message26": {
+      "main": [
+        [
+          {
+            "node": "Send a message27",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message28": {
+      "main": [
+        [
+          {
+            "node": "Send a message29",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message30": {
+      "main": [
+        [
+          {
+            "node": "Send a message31",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message32": {
+      "main": [
+        [
+          {
+            "node": "Send a message33",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message21": {
+      "main": [
+        [
+          {
+            "node": "Send a message10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message34": {
+      "main": [
+        [
+          {
+            "node": "Send a message9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message36": {
+      "main": [
+        [
+          {
+            "node": "Send a message22",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message38": {
+      "main": [
+        [
+          {
+            "node": "Send a message26",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message39": {
+      "main": [
+        [
+          {
+            "node": "Send a message28",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message42": {
+      "main": [
+        [
+          {
+            "node": "Send a message30",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message41": {
+      "main": [
+        [
+          {
+            "node": "Send a message32",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "713deec8-8a71-4300-bb53-1070a3832fb6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f39d8fdd402ddce20d0eb724526828e8c2d8679170e3a08fe6cd471c799fab6"
+  },
+  "id": "VrIg6N3LODA2EgBy",
+  "tags": []
+}

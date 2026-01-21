@@ -792,7 +792,7 @@
         "url": "https://api.hibob.com/v1/people/search",
         "sendHeaders": true,
         "specifyHeaders": "json",
-        "jsonHeaders": "{\n  \"authorization\": \"Basic U0VSVklDRS0zMDEzMTozdEs3SVNabnRPWDI0c3FyR1hOS21rVmtKZmthUU1XTGxNVmtmb3ZC\",\n  \"accept\": \"application/json\",\n  \"content-type\": \"application/json\"\n}\n",
+        "jsonHeaders": "{\n  \"authorization\": \"Basic abcd_1234\",\n  \"accept\": \"application/json\",\n  \"content-type\": \"application/json\"\n}\n",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"filters\": [\n    {\n      \"fieldPath\": \"root.id\",\n      \"operator\": \"equals\",\n      \"values\": [\"{{ $('Webhook').item.json.body.data.employeeId }}\"]\n    }\n  ],\n  \"showInactive\": false,\n  \"humanReadable\": \"APPEND\"\n}\n",
